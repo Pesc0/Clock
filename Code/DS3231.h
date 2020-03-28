@@ -5,12 +5,9 @@
 #include <stdbool.h>
 #include <float.h>
 
-
-typedef struct
-{
+typedef struct {
     uint8_t hh, mm;
 } Time_t;
-
 
 void RTC_init();
 bool RTC_lost_power();

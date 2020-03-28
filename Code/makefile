@@ -1,7 +1,7 @@
 all: clean build
 
 build:
-	avr-gcc -std=c99 -Wall -Os -mmcu=attiny85 -DF_CPU=1000000 main.c DS3231.c USI_I2C_Master.c display_7seg.c eeprom.c
+	avr-gcc -std=c99 -Wall -Os -mmcu=attiny85 -DF_CPU=1000000 main.c DS3231.c USI_I2C_Master.c HT16K33_display.c eeprom.c
 	avr-objcopy -j .text -j .data -O ihex a.out a.hex
 
 flash: all

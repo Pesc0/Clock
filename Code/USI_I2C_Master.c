@@ -11,6 +11,8 @@
 #define SDA PB0
 #define SCL PB2
 
+#define FAST_MODE
+
 /*---------------------*/
 
 inline void SDA_HI() { USI_PORT |= (1 << SDA); }
@@ -23,8 +25,6 @@ inline void SDA_OUT() { USI_DDR |= (1 << SDA); }
 
 inline void toggle_SCL() { USICR |= (1 << USITC); }
 inline void wait_SCL_HI() { while( !(USI_PIN & (1 << SCL)) ); }
-
-#define FAST_MODE
 
 #ifdef FAST_MODE
     //Delays for fast mode (100kHz < SCL < 400kHz)
@@ -105,7 +105,7 @@ bool gen_start_condition()
 
     //Generate start condition
     SDA_LO(); 
-    delay_T4();                         
+    delay_T4();
     SCL_LO(); 
     SDA_HI(); 
 
@@ -120,10 +120,10 @@ bool gen_stop_condition()
 {
     SDA_LO(); 
     SCL_HI();
-    wait_SCL_HI(); //Wait if slave is not ready. 
-	delay_T4();
-    SDA_HI(); 
-	delay_T2();
+    wait_SCL_HI(); //Wait if slave is not ready.
+    delay_T4();
+    SDA_HI();
+    delay_T2();
   
     if( !(USISR & (1 << USIPF)) ) { 
         return false; //Failed to detect stop condition
@@ -165,7 +165,7 @@ bool I2C_write(uint8_t data)
     //Check ack/nack response from slave
     SDA_IN(); //SDA as input to read
     transfer_1bit(); //Read ACK/NACK
-    data = USIDR; //Repurpose data variable
+    data = USIDR; //Reuse data variable to immediately reset data register
     reset_USIDR();
     SDA_OUT(); //Restore as output
 

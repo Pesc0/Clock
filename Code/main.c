@@ -1,6 +1,6 @@
 #include "USI_I2C_Master.h"
 #include "DS3231.h"
-#include "display_7seg.h"
+#include "HT16K33_display.h"
 #include "eeprom.h"
 
 #include <avr/io.h>
@@ -12,23 +12,14 @@
 #include <stdbool.h>
 #include <float.h>
 
-
-#define BTT_1 (1 << PB3)
+#define BTT_1 (1 << PB1)
 #define BTT_2 (1 << PB4)
-#define BTT_3 (1 << PB1)
-
-#define MODE_BTT BTT_2
-#define PLUS_BTT BTT_3
-#define MINUS_BTT BTT_1 
-
-
-#define BRIGHT_MIN 1
-#define BRIGHT_MAX 15
-#define EEPROM_BRIGHT_ADDR 0
-volatile uint8_t brightness = 0; 
-volatile uint8_t old_bright = 0; //dummy variable to prevent useless eeprom writes
+#define BTT_3 (1 << PB3)
 
 volatile bool blink = 0;
+volatile uint8_t seconds_in_temp_mode = 0;
+volatile uint8_t brightness = 0; 
+volatile uint8_t old_bright = 0; //dummy variable to prevent useless eeprom writes
 
 volatile Time_t now = {0, 0};
 
@@ -43,9 +34,9 @@ typedef enum {
 
 volatile ClockState clock_state = 0;
 
-#define MAX_SECONDS_IN_TEMP_MODE 10
-volatile uint8_t seconds_in_temp_mode = 0;
+#include "config.h"
 
+/*------------------------------------------*/
 
 //update the display in different ways depending on the current mode
 void update_clock()
@@ -72,7 +63,7 @@ void update_clock()
             float temp = RTC_get_temperature();
 
             if(temp < 0) { //-12C
-                disp_write_digit_num(0, 0x11, false); //actually '-' (see numtable in display_7seg.c)
+                disp_write_digit_raw(0, 0x40); // '-' 
                 temp = -temp; //pretend temp is positive
                 disp_write_digit_num(1, (uint8_t)(temp/10.0f)%10, false); //tens of degrees
                 disp_write_digit_num(3, (uint8_t)(temp)%10, false); //units of degrees
@@ -84,15 +75,15 @@ void update_clock()
             }
         }
 
-        disp_write_digit_num(4, 0x0C, false); //write final C for celsius
+        disp_write_digit_raw(4, 0x39); //write final C for celsius
 
-        seconds_in_temp_mode++; //increase counter
-        if(seconds_in_temp_mode > MAX_SECONDS_IN_TEMP_MODE) { //go back to normal time display after time elapsed
+        if(seconds_in_temp_mode >= MAX_SECONDS_IN_TEMP_MODE) { //go back to normal time display after time elapsed
             clock_state = DISPLAY_TIME;
         }
+        seconds_in_temp_mode++; //increase counter
 
         break;
-        
+
     case SET_HOUR:
 
         if(blink) { //blink hour digits
@@ -107,7 +98,7 @@ void update_clock()
 
         break;
 
-    case SET_MIN:           
+    case SET_MIN:
 
         disp_write_digit_num(0, now.hh/10, false);
         disp_write_digit_num(1, now.hh%10, false);
@@ -123,28 +114,26 @@ void update_clock()
 
     case SET_BRIGHT:
         disp_set_brightness(brightness);
-        disp_write_digit_num(0, 0x0B, false);
-        disp_write_digit_num(1, 0x12, false); //actually 'r' (see numtable in display_7seg.c)
-        disp_write_digit_num(3, 0x13, false); //actually 'i' (see numtable in display_7seg.c)
-        disp_write_digit_num(4, 0x14, false); //actually 'G' (see numtable in display_7seg.c)
+        disp_write_digit_raw(0, 0x7C); // 'b'
+        disp_write_digit_raw(1, 0x50); // 'r'
+        disp_write_digit_raw(3, 0x10); // 'i'
+        disp_write_digit_raw(4, 0x3D); // 'G'
         break;
 
     case ERR_DEAD_BATTERY:
 
-        ///alternate "dEAd" and "bAtt"
+        //alternate "dEAd" and "bAtt"
         if(blink) {
-            disp_write_digit_num(0, 0x0D, false);
-            disp_write_digit_num(1, 0x0E, false);
-            disp_write_digit_num(3, 0x0A, false);
-            disp_write_digit_num(4, 0x0D, false); 
+            disp_write_digit_raw(0, 0x5E); // 'd'
+            disp_write_digit_raw(1, 0x79); // 'E'
+            disp_write_digit_raw(3, 0x77); // 'A'
+            disp_write_digit_raw(4, 0x5E); // 'd'
         }
         else {
-            disp_write_digit_num(0, 0x0B, false);
-            disp_write_digit_num(1, 0x0A, false);
-
-            //actually 't' (see numtable in display_7seg.c)
-            disp_write_digit_num(3, 0x10, false); 
-            disp_write_digit_num(4, 0x10, false); 
+            disp_write_digit_raw(0, 0x7C); // 'b'
+            disp_write_digit_raw(1, 0x77); // 'A'
+            disp_write_digit_raw(3, 0x78); // 't'
+            disp_write_digit_raw(4, 0x78); // 't'
         }
 
         break;
@@ -154,14 +143,14 @@ void update_clock()
     disp_update(); //push changes to the display
 }
 
-//when called makes sure that updateClock gets called on the next timer interrupt
+//when called immediately updates clock and reset watchdog to trigger after 1 second
 void force_update()
 {
-    update_clock();
     wdt_reset();
+    update_clock();
 }
 
-//set the interrupt to call updateClock() once per second
+//set the watchdog to call updateClock() once per second
 void update_freq_1hz() 
 {
     WDTCR = (1 << WDIE) | (1 << WDP2) | (1 << WDP1);
@@ -173,10 +162,10 @@ void update_freq_2hz()
     WDTCR = (1 << WDIE) | (1 << WDP2) | (1 << WDP0);
 }
 
-//125hz interrupt that calls updateClock()
+//interrupt executed at 1 or 2 Hz
 ISR(WDT_vect) 
 {
-    update_clock();  
+    update_clock();
 }
 
 //button interrupt
@@ -191,14 +180,12 @@ ISR(PCINT0_vect)
         {
         case DISPLAY_TIME:
 
-            //if the buton gets released the interrupt flag gets set
-            //basically check for a button released flag every 1ms for a maximum of 1 second (debounce included) 
-            for(uint16_t i = 0; i < 985 && !(GIFR & (1 << PCIF)); i++) {
+            // check for a button released every 1ms for a maximum of 1 second
+            for(uint16_t i = 0; i < LONG_PRESS_TIME_MS && !(PINB & MODE_BTT); i++) {
                 _delay_ms(1);
             }
-
-            //no flag was set. button is still pressed. this is a long press: enter settings mode
-            if( !(GIFR & (1 << PCIF)) ) {
+            
+            if( !(PINB & MODE_BTT) ) { //button is still pressed. this is a long press: enter settings mode
                 clock_state = SET_HOUR;
                 update_freq_2hz(); //fast blinking in setting modes
             }
@@ -215,23 +202,23 @@ ISR(PCINT0_vect)
             break;
 
         case SET_MIN:
+            RTC_set_time(now); //write new time when exiting time setting modes
+
             //entering SET_BRIGHT mode: keep track of old brightness value to avoid writing 
             //to eeprom if the value didnt change
             clock_state = SET_BRIGHT;
             old_bright = brightness; 
-
-            RTC_set_time(now); //write new time when exiting time setting modes
             break;
 
         case SET_BRIGHT:
             clock_state = DISPLAY_TIME; //return to time mode
+            update_freq_1hz(); //go back to normal blinking in display modes
 
             //if brightness got changed write new brightness value to eeprom when exiting SET_BRIGHT mode
             if(brightness != old_bright) {
                 eeprom_write(EEPROM_BRIGHT_ADDR, brightness); 
             }
 
-            update_freq_1hz(); //go back to normal blinking in display modes
             break;
 
         case DISPLAY_TEMP:
@@ -245,76 +232,119 @@ ISR(PCINT0_vect)
         }
 
         //so that digits blink as soon as you change mode, making the interface more "reactive"
-        blink = (clock_state == DISPLAY_TIME); //when going back to display time mode turn on colon immediately [cosmetic]
+        //when going back to display time mode turn on colon immediately instead [cosmetic]
+        blink = (clock_state == DISPLAY_TIME); 
         force_update();
     }
 
     if(!(PINB & MINUS_BTT)) // button 1 decrease
     {
-        switch (clock_state)
-        {     
-        case SET_HOUR:
-            now.hh--; //decrease time by one hour
-            if(now.hh > 23) {
-                now.hh = 23; //overflow
-            }
-            break;
+        bool first_time = true; //require a long press before triggering the quick repeat
+        uint16_t delay_time_ms = 0;
 
-        case SET_MIN:
-            now.mm--; //decrease by one minute
-            if(now.mm > 59) {
-                now.mm = 59; //overflow
-            }
-            break;
+        do //loop to decrease quickly when the button is held down
+        {
+            switch (clock_state)
+            {     
+            case SET_HOUR:
+                now.hh--; //decrease time by one hour
+                if(now.hh > 23) {
+                    now.hh = 23; //underflow
+                }
+                break;
 
-        case SET_BRIGHT:
-            brightness--;
-            if(brightness < BRIGHT_MIN || brightness > BRIGHT_MAX) {
-                brightness = BRIGHT_MAX; 
-            }
-            break;
+            case SET_MIN:
+                now.mm--; //decrease by one minute
+                if(now.mm > 59) {
+                    now.mm = 59; //underflow
+                }
+                break;
 
-        default: return; break; //skip update in other modes
-        }
-       
-        //so that the new value is instantly updated and shown, 
-        //instead of having to wait 1 second in case it happened to be blinking
-        blink = true;
-        force_update();     
+            case SET_BRIGHT:
+                brightness--;
+                if(brightness < BRIGHT_MIN || brightness > BRIGHT_MAX) {
+                    brightness = BRIGHT_MAX; 
+                }
+                break;
+
+            default: return; //skip update in other modes
+            }
+        
+            //so that the new value is instantly updated and shown, 
+            //instead of having to wait 1 second in case it happened to be blinking
+            blink = true;
+            force_update();
+
+            if(first_time)
+            {
+                first_time = false;
+                delay_time_ms = LONG_PRESS_TIME_MS;
+            }
+            else
+            {
+                delay_time_ms = LONG_PRESS_REPEAT_TIME_MS;
+            }
+
+            for(uint16_t i = 0; i < delay_time_ms && !(PINB & MINUS_BTT); i++) {
+                _delay_ms(1);
+            }
+
+        } while (!(PINB & MINUS_BTT));
     }
 
     if(!(PINB & PLUS_BTT)) // button 3 increase
     {
-        switch (clock_state)
+        bool first_time = true; //require a long press before triggering the quick repeat
+        uint16_t delay_time_ms = 0;
+
+        do //loop to increase quickly when the button is held down
         {
-        case SET_HOUR:
-            now.hh++; //increase time by one hour
-            if(now.hh > 23) {
-                now.hh = 0;
-            }
-            break;
+            switch (clock_state)
+            {
+            case SET_HOUR:
+                now.hh++; //increase time by one hour
+                if(now.hh > 23) {
+                    now.hh = 0;
+                }
+                break;
 
-        case SET_MIN:
-            now.mm++; //increase by one minute
-            if(now.mm > 59) {
-                now.mm = 0;
-            }
-            break;
+            case SET_MIN:
+                now.mm++; //increase by one minute
+                if(now.mm > 59) {
+                    now.mm = 0;
+                }
+                break;
 
-        case SET_BRIGHT:
-            brightness++;
-            if(brightness > BRIGHT_MAX) {
-                brightness = BRIGHT_MIN; //wrap around to minimum
+            case SET_BRIGHT:
+                brightness++;
+                if(brightness > BRIGHT_MAX) {
+                    brightness = BRIGHT_MIN; //wrap around to minimum
+                }
+                break;
+            
+            default: return; //skip update in other modes
             }
-            break;
-        
-        default: return; break; //skip update in other modes
-        }
 
-        //so that the new value is instantly updated and shown, 
-        //instead of having to wait 1 second in case it happened to be blinking
-        blink = true;
-        force_update();  
+            //so that the new value is instantly updated and shown, 
+            //instead of having to wait 1 second in case it happened to be blinking
+            blink = true;
+            force_update();  
+
+            if(first_time)
+            {
+                first_time = false;
+                delay_time_ms = LONG_PRESS_TIME_MS;
+            }
+            else
+            {
+                delay_time_ms = LONG_PRESS_REPEAT_TIME_MS;
+            }
+
+            for(uint16_t i = 0; i < delay_time_ms && !(PINB & PLUS_BTT); i++) {
+                _delay_ms(1);
+            }
+
+        } while (!(PINB & PLUS_BTT));
     }
 
 } //button ISR
@@ -324,35 +354,31 @@ int main()
 {
     I2C_init();
     disp_init();
+    RTC_init();
 
     brightness = eeprom_read(EEPROM_BRIGHT_ADDR); //retrieve saved value
-
     //ensure eeprom didnt get corrupted
     if(brightness > BRIGHT_MAX || brightness < BRIGHT_MIN) {
         brightness = BRIGHT_MAX;
     }
-
     disp_set_brightness(brightness); 
-    
+
     if(RTC_lost_power()) {
         clock_state = ERR_DEAD_BATTERY;
     }
     else {
         clock_state = DISPLAY_TIME;
     }
-        
-    blink = true; //start with colon on / "dead"
 
+    blink = true; //start with [colon on] or ["dead"]
     update_clock(); //display as soon as possible
 
     WDTCR = (1 << WDIE); //enable watchdog;
-
     update_freq_1hz(); //ensure that for default DISPLAY mode clockUpdate() is called once per second
 
     //enable button as input pullups
     DDRB &= ~(BTT_1 | BTT_2 | BTT_3);
     PORTB |= (BTT_1 | BTT_2 | BTT_3);
-    
     _delay_ms(10); //delay to stabilize the input pullups in order to avoid generating a premature interrupt
 
     //setup buttons interrupt
@@ -377,7 +403,7 @@ int main()
 
         sleep_cpu(); //go to sleep and wait for an interrupt. 
 
-        //after the interrupt has been processed the loop will restart
+        //after the interrupt has woken up the cpu and executed the loop will restart
     }
 
     return 0; //never reached
