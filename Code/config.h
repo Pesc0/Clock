@@ -2,7 +2,7 @@
 #define PLUS_BTT BTT_1
 #define MINUS_BTT BTT_3 
 
-//how many second it takes to stop displaying temperature and go back to time
+//how many second it takes to stop displaying temperature and automatically go back to time
 #define MAX_SECONDS_IN_TEMP_MODE 10 
 
 #define BRIGHT_MIN 1 //min 0 (but at 0 the display is off)
