@@ -1,2 +1,2 @@
-*.hex
-*.out
+Code/*.hex
+Code/*.out
