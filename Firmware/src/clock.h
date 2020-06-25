@@ -9,7 +9,7 @@ bool clock_check_for_mode_button_long_press();
 void clock_mode_button_short_press();
 void clock_mode_button_long_press();
 
-bool clock_check_for_repeated_press();
+bool clock_are_adjust_buttons_active();
 void clock_plus_button_press();
 void clock_minus_button_press();
 

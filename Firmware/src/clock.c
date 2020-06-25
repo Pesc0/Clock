@@ -81,13 +81,14 @@ void clock_init()
     update_freq_1hz(); //ensure that for default DISPLAY mode clockUpdate() is called once per second
 }
 
-
+//a long press is required only when jumping from display_time to set_hour mode
 bool clock_check_for_mode_button_long_press()
 {
     return clock_state == DISPLAY_TIME;
 }
 
-bool clock_check_for_repeated_press()
+//plus and minus buttons are active only when needed, they do nothing in other modes
+bool clock_are_adjust_buttons_active()
 {
     return clock_state == SET_HOUR || clock_state == SET_MIN || clock_state == SET_BRIGHT;
 }
