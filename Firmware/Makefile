@@ -1,7 +1,7 @@
 all: build
 
 
-Srcs = main.c DS3231.c USI_I2C_Master.c HT16K33_display.c eeprom.c
+Srcs = main.c DS3231.c USI_I2C_Master.c HT16K33_display.c eeprom.c clock.c buttons.c
 
 build:
 	avr-gcc -std=c99 -Wall -Os -mmcu=attiny85 -DF_CPU=1000000 src/*.c -o Build/Fw.out

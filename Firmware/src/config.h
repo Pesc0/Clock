@@ -1,3 +1,5 @@
+#include "buttons.h"
+
 #define MODE_BTT BTT_2 
 #define PLUS_BTT BTT_1
 #define MINUS_BTT BTT_3 
@@ -12,4 +14,4 @@
 #define EEPROM_BRIGHT_ADDR 0 
 
 #define LONG_PRESS_TIME_MS 1000
-#define LONG_PRESS_REPEAT_TIME_MS 100
+#define REPEAT_TIME_MS 100
