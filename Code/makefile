@@ -1,4 +1,4 @@
-all: clean build
+all: build
 
 build:
 	avr-gcc -std=c99 -Wall -Os -mmcu=attiny85 -DF_CPU=1000000 main.c DS3231.c USI_I2C_Master.c HT16K33_display.c eeprom.c
