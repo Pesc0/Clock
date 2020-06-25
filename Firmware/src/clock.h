@@ -5,6 +5,7 @@
 
 void clock_init();
 
+//functions called by buttons interrupt to interact with the clock
 bool clock_check_for_mode_button_long_press();
 void clock_mode_button_short_press();
 void clock_mode_button_long_press();

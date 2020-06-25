@@ -10,8 +10,11 @@
 #define BRIGHT_MIN 1 //min 0 (but at 0 the display is off)
 #define BRIGHT_MAX 15 //max 15
 
-//where the brightness value is saved in the eeprom
+//where the brightness value is saved in the eeprom [128/256/512 bytes depending on tiny85 model]
 #define EEPROM_BRIGHT_ADDR 0 
 
-#define LONG_PRESS_TIME_MS 1000
+//time needed to register a long press or to start button quick repeat
+#define LONG_PRESS_TIME_MS 1000 
+
+//when quick repeat is active wait this time between presses
 #define REPEAT_TIME_MS 100

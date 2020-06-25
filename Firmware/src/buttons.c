@@ -70,7 +70,7 @@ ISR(PCINT0_vect)
 
             wait_while_button_is_pressed(LONG_PRESS_TIME_MS, MINUS_BTT);
 
-            while(button_is_pressed(MINUS_BTT))
+            while(button_is_pressed(MINUS_BTT)) //repeat action quickly when the button is held down
             {
                 clock_minus_button_press();
 
@@ -84,7 +84,7 @@ ISR(PCINT0_vect)
 
             wait_while_button_is_pressed(LONG_PRESS_TIME_MS, PLUS_BTT);
 
-            while(button_is_pressed(PLUS_BTT))
+            while(button_is_pressed(PLUS_BTT)) //repeat action quickly when the button is held down
             {
                 clock_plus_button_press();
 

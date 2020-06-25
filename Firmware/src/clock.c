@@ -5,7 +5,7 @@
 #include "config.h"
 
 #include <avr/interrupt.h>
-#include <avr/wdt.h>
+#include <avr/wdt.h> //watchdog interrupt used to periodically update the clock
 #include <stdint.h>
 #include <stdbool.h>
 #include <float.h>
