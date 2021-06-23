@@ -1,0 +1,4 @@
+(fp_lib_table
+  (lib (name display7seg)(type KiCad)(uri ${KIPRJMOD}/display7seg.pretty)(options "")(descr ""))
+  (lib (name ht16k33)(type KiCad)(uri ${KIPRJMOD}/ht16k33.pretty)(options "")(descr ""))
+)
