@@ -45,3 +45,6 @@ make install
   <img src="pictures/img3.jpg">
 </p>
 
+# Revisions
+- rev-1: initial design
+- rev-2: fix display was upside down, despite silkscreen being right side up
