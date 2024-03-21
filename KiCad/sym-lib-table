@@ -1,6 +1,7 @@
 (sym_lib_table
-  (lib (name HT16K33)(type Legacy)(uri C:/Users/Francesco/Desktop/clock/HT16K33.lib)(options "")(descr ""))
-  (lib (name 7_segment)(type Legacy)(uri C:/Users/Francesco/Desktop/clock/7_segment.lib)(options "")(descr ""))
-  (lib (name HT16K33-28SOP)(type Legacy)(uri C:/Users/Francesco/Desktop/clock/HT16K33-28SOP.lib)(options "")(descr ""))
-  (lib (name clock-rescue)(type Legacy)(uri ${KIPRJMOD}/clock-rescue.lib)(options "")(descr ""))
+  (version 7)
+  (lib (name "HT16K33")(type "Legacy")(uri "C:/Users/Francesco/Desktop/clock/HT16K33.lib")(options "")(descr ""))
+  (lib (name "7_segment")(type "Legacy")(uri "C:/Users/Francesco/Desktop/clock/7_segment.lib")(options "")(descr ""))
+  (lib (name "HT16K33-28SOP")(type "Legacy")(uri "C:/Users/Francesco/Desktop/clock/HT16K33-28SOP.lib")(options "")(descr ""))
+  (lib (name "clock-rescue")(type "KiCad")(uri "${KIPRJMOD}/clock-rescue.kicad_sym")(options "")(descr ""))
 )
