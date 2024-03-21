@@ -31,3 +31,17 @@ Once the programmer is connected to the board simply run
 ``` 
 make install 
 ```
+
+# Gallery
+<p align="center">
+  <img src="pictures/img1.png">
+</p>
+
+<p align="center">
+  <img src="pictures/img2.jpg">
+</p>
+
+<p align="center">
+  <img src="pictures/img3.jpg">
+</p>
+
